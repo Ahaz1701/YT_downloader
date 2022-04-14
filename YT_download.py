@@ -8,16 +8,27 @@ if __name__ == "__main__":
     
     url_file = sys.argv[1]
     output_directory = sys.argv[-1]
+    url_error = []
 
     with open(url_file) as f:
-        for url in f.readlines():
-            yt = YouTube(url.strip())
-            music = yt.streams.filter(only_audio=True).first().download(output_path=output_directory)
+        for url in list(set(f.read().splitlines())):
+            yt = YouTube(url)
+            try:
+                music = yt.streams.get_audio_only().download(output_path=output_directory)
+            except:
+                url_error.append(url)
+                continue
 
             base, ext = os.path.splitext(music)
-            new_file = base + '.mp3'
-            os.rename(music, new_file)
+            cpt = 1
+            while True:
+                new_file = base + '.mp3' if cpt == 1 else base + str(cpt) + '.mp3'
+                if not os.path.exists(new_file):
+                    os.rename(music, new_file)
+                    break
+                cpt += 1
   
-            print(yt.title + " has been successfully downloaded.")
+            print("[+] " + yt.title)
 
-    print("Have a good mix !")
+    print("\nHave a good mix !\n")
+    [print("[ERROR] " + url) for url in url_error]
